@@ -115,7 +115,7 @@
 (defn sqrt-variation [x]
   (sqrt-iter-variation 1.0 x))
 
-; I do see any change at all using the small-variation stop condition
+; I don't see any change at all using the small-variation stop condition
 
 ;exercise 8
 ;==========
@@ -156,26 +156,3 @@
 
 ; Using the small-variation condition for stop here has a different
 ; result.
-
-
-;; execise 1.9
-;
-;; exercise 1.10
-;(defn A [x y]
-;  (cond
-;    (= y 0) 0
-;    (= x 0) (* 2 y)
-;    (= y 1) 2
-;    :else (A (- x 1) (A x (- y 1)))
-;  )
-;)
-;
-;(defn f [n]
-;  (A 0 n)
-;)
-;
-;(defn g [n]
-;  (A 1 n)
-;)
-;
-;(defn h [n] (A 2 n))
