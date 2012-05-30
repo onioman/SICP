@@ -43,14 +43,14 @@
 
 ;exercise 4
 ;==========
-(defn a-plus-abs-b [a b] ((if (> b 0) + -) a b))
+(defn a-plus-abs-b [a b] ((if (pos? b) + -) a b))
 
 ;exercise 5
 ;==========
 (defn p [] (p))
 
 (defn order-test [x y]
-  (if (= x 0) 0 y))
+  (if (zero? 0) 0 y))
 
 (comment 
   (order-test 0 (p)))
@@ -99,7 +99,7 @@
   (new-sqrt-iter 1.0 x))
 
 ;it gets an stack overflow becase both then and else clauses are
-;evaluate but I am not very sure why both are evaluated
+;evaluated but I am not very sure why both are evaluated
 
 ;exercise 7
 ;==========
