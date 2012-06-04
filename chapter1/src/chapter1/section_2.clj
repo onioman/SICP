@@ -196,3 +196,15 @@
         (even? n) (square (fast-exp b (/ n 2)))
         :else     (* b (fast-exp b (dec n)))))
 
+; Exercise 1.17
+;===============
+(defn mult [a b]
+  (if (zero? b)
+    0
+    (+ a (* a (- b 1)))))
+
+(defn fast-mult [a b]
+  (cond
+    (zero? b) 0
+    (even? b) (* 2 (fast-mult a (/ b 2)))
+    :else     (+ a (fast-mult a (dec b)))))
