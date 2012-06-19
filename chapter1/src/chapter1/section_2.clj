@@ -196,6 +196,13 @@
         (even? n) (square (fast-exp b (/ n 2)))
         :else     (* b (fast-exp b (dec n)))))
 
+(defn fast-iter-exp [b n]
+  (loop [a 1, b b, n n]
+    (cond
+      (zero? n) a
+      (even? n) (recur a (square b) (/ b 2))
+      :else     (recur (* a b) b (dec b)))))
+
 ; Exercise 1.17
 ;===============
 (defn mult [a b]
@@ -203,8 +210,158 @@
     0
     (+ a (* a (- b 1)))))
 
+(defn hlv [x] (/ x 2))
+(defn dbl [x] (* x 2))
 (defn fast-mult [a b]
   (cond
     (zero? b) 0
-    (even? b) (* 2 (fast-mult a (/ b 2)))
+    (even? b) (dbl (fast-mult a (hlv b)))
     :else     (+ a (fast-mult a (dec b)))))
+
+; Exercise 1.18
+;==============
+(defn fast-iter-mult [a b]
+  (loop [acum 0, a a, b b]
+   (cond
+    (zero? b) acum
+    (even? b) (recur acum (dbl a) (hlv b))
+    :else     (recur (+ acum a) a (dec b)))))
+
+
+; Exercise 1.19
+;==============
+
+;demostration taken from Sebas
+
+(defn fast-fib [n]
+  (loop [a 1, b 0, p 0, q 1, n n]
+    (cond
+      (zero? n) b
+      (even? n) (recur a b
+                       (+ (square p) (square q))
+                       (+ (* 2 p q) (square q))
+                       (hlv n))
+      :else     (recur (+ (* b q) (* a q) (* a p))
+                       (+ (* b p) (* a q))
+                       p q (dec count)))))
+
+; Exercise 1.20
+;===============
+(defn gcd [a b]
+  (if (= b 0)
+    a
+    (gcd b (mod a b))))
+
+; applicative
+; (gcd 206 40) =
+; (gcd 40 (mod 206 40)) = (gcd 40 6)
+; (gcd 40 6) = (gcd 6 (mod 40 6)) = (gcd 6 4) =
+; (gcd 6 4)  = (gcd 4 (mod 6 4)) = (gcd 4 2)
+; (gcd 4 2)  = (gcd 2 (mod 4 2)) = (gcd 2 0)
+;
+;nomal
+;(gcd 206 40) =
+; (zero? 40) 
+;(gcd 40 (mod 206 40)) =
+; (zero? (mod 206 40)) ->
+;(gcd (mod 206 40) (mod 40 (mod 206 40)))
+
+; Exercise 1.21
+(defn smallest-divisor [n]
+  (loop [n n, test-div 2]
+    (cond
+      (> (square test-div) n)   n
+      (zero? (mod n test-div))  test-div
+      :else (recur n (inc test-div)))))
+
+(comment
+  (smaller-divisor 199))
+;199
+
+(comment
+  (smaller-divisor 1999))
+;1999
+
+(comment
+  (smaller-divisor 19999))
+;7
+
+; Exercise 1.22
+;===============
+(defn runtime [] (System/currentTimeMillis))
+
+(defn timed-prime-test [n]
+  (letfn [(prime? [n]
+            (= (smallest-divisor n) n))]
+    (let [start (runtime)]
+      ; return a vector
+      [n (prime? n) (- (runtime) start)])))
+      ; return boolean + print
+      ;(if (prime-test? n)
+      ;  (do 
+      ;    (println (str n " *** " (- (runtime) start)))
+      ;    true)
+      ;  (do
+      ;    (println (str n " " (- (runtime) start)))
+      ;    false)))))
+
+(defn search-for-primes [start end]
+  (let [search-space (range start end 2)]
+    (filter second (map timed-prime-test search-space))))
+    ;(filter timed-prime-test search-space)))
+
+
+; Exercise 1.23
+;===============
+(defn timed-prime [prime-test n]
+  (letfn [(prime? [n] (prime-test n))]
+    (let [start (runtime)]
+      [n (prime? n) (- (runtime) start)])))
+
+(defn custom-smallest-div [next-div n]
+  (loop [n n, test-div 2]
+    (cond
+      (> (square test-div) n)   n
+      (zero? (mod n test-div))  test-div
+      :else (recur n (next-div test-div)))))
+
+(defn skip-div-of-two [n]
+  (if (= n 2) 3 (+ n 2)))
+  
+(defn search-for-primes [start end condition]
+  (let [search-space (range start end 2)]
+    (filter second (map condition search-space))))
+
+(defn fast-primes [start end]
+  (search-for-primes start end
+         (partial timed-prime #(= % (custom-smallest-div skip-div-of-two %))))) 
+
+
+; Exercise 1.24
+;==============
+;TODO
+
+; Exercise 1.25
+;==============
+
+; Fermat thing
+(defn expmod [base exp m]
+  (cond
+    (= exp 0)     1
+    (even? exp)   (mod (square (expmod base (/ exp 2)  m))
+                       m)
+    :else         (mod (* base (expmod base (dec exp) m))
+                       m)))
+
+(defn fermat-test [n]
+  (let [a (+ 1 (rand (dec n)))]
+    (= (expmod a n n) a)))
+
+(defn fermat-prime? [n times]
+  (cond (zero? times)   true
+        (fermat-test n) (fermat-prime? n (dec times))
+        :else           false))
+
+
+
+;TODO!!!
