@@ -138,8 +138,6 @@
     (= n 1)   1
     :else     (+ (fib (- n 1)) fib (- n 2))))
 
-;TODO
-
 ; exercise 1.14
 ;==============
 (defn pretty-cc [amount coins indent]
@@ -336,12 +334,7 @@
   (search-for-primes start end
          (partial timed-prime #(= % (custom-smallest-div skip-div-of-two %))))) 
 
-
 ; Exercise 1.24
-;==============
-;TODO
-
-; Exercise 1.25
 ;==============
 
 ; Fermat thing
@@ -353,15 +346,58 @@
     :else         (mod (* base (expmod base (dec exp) m))
                        m)))
 
+
+; Random integer calculation (taken from Sebas)
+;(defn log2 [n]
+;  (/ (Math/log n) (Math/log 2)))
+;
+;(defn rand-int [n]
+;  (let [bits  (inc (int (Math/round (log2 n))))
+;        rnd   (java.util.Random.)]
+;    (loop []
+;      (let [r (BigInteger. bits rnd)]
+;       (if (< r n) r (recur)))))) 
+;clojure has its own rand-int!
+
 (defn fermat-test [n]
-  (let [a (+ 1 (rand (dec n)))]
+  (let [a (inc (rand-int (dec n)))]
     (= (expmod a n n) a)))
 
-(defn fermat-prime? [n times]
+(defn fermat-prime? [times n]
   (cond (zero? times)   true
-        (fermat-test n) (fermat-prime? n (dec times))
+        (fermat-test n) (fermat-prime? (dec times) n)
         :else           false))
 
+(defn fermat-prime-test [n]
+  (timed-prime #(fermat-prime? 5 %) n))
+
+(defn faster-primes [start end]
+  (search-for-primes start end 
+          (partial timed-prime (partial fermat-prime? 5))))
+
+; Exercise 1.25
+;==============
+(defn fast-expmod [base exp m]
+  (mod (fast-expt base exp) m))
+
+; Exercise 1.26
+;==============
+; It happens because by using * it is calling recursevely twice to expmod.
 
 
-;TODO!!!
+; Exercise 1.27
+;==============
+(def carmichaels [561 1105 1729 2465 2821 6601])
+
+(defn prime? [n]
+  (= n (custom-smallest-div skip-div-of-two n)))
+
+(defn probably-prime? [n]
+  (every? #(= (expmod % n n) %) (range 1 n)))
+
+(def fermat-says-prime-but-not-really
+  (remove prime? (filter probably-prime? (range 7000))))
+
+; Exercise 1.28
+;==============
+;TODO
