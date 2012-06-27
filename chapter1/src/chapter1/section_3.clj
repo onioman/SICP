@@ -1,4 +1,5 @@
-(ns chapter1.section_3)
+(ns chapter1.section_3
+  (:use [chapter1.section_2 :only [prime? gcd]]))
 
 ; Exercise 1.29
 ;==============
@@ -50,3 +51,57 @@
               result
               (iter (next-val a) (* result (term a)))))]
     (iter a 1)))
+
+(defn factorial [n]
+  (letfn [(ident [x] x)]
+    (prod-iter ident 1 inc n)))
+
+(defn wallis-next [n]
+  (let [remainder (mod n 2)]
+    (cond
+      (zero? n)         (/ 2 3)
+      (zero? remainder) (/ (* 2 (inc (/ n 2))) 
+                           (+ 3 (* 2 (/ n 2))))
+      :else             (/ (* 2 (inc (/ (inc n) 2)))
+                           (+ 3 (* 2 (/ (dec n) 2)))))))
+
+(defn wallis-phi [n]
+  (* (prod-iter wallis-next 0 inc n) 4)) 
+
+; Exercise 1.32
+;==============
+(defn accumulate [combiner null-val term a next-val b]
+  (if (> a b) 
+    null-val
+    (combiner (term a) (accumulate (next-val a) next-val b))))
+
+(defn accumulate-iter [combiner null-val term a next-val b]
+  (letfn [(iter [a result]
+            (if (> a b)
+              result
+              (iter (next-val a) (combiner result (term a)))))]
+    (iter a null-val)))
+
+(defn fact-acum [n]
+  (letfn [(ident [x] x)]
+    (accumulate-iter * 1 ident 1 inc n)))
+
+; Exercise 1.33
+;==============
+(defn filtered-acum [combiner null-val pred term a next-val b]
+  (letfn [(iter [a result]
+            (let [filtered (if (pred a) (term a) null-val)]
+              (if (> a b)
+                result
+                (iter (next-val a) (combiner result filtered)))))]
+    (iter a null-val)))
+
+;a)
+(defn sum-square-primes [a b]
+  (filtered-acum + 0 prime? #(* % %) a inc b)) 
+
+;b)
+(defn prod-relative-primes [n]
+  (letfn [(ident [x] x)]
+    (filtered-acum * 1 #(= 1 (gcd % n)) ident 1 inc n)))
+
