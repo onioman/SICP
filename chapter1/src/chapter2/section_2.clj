@@ -337,3 +337,258 @@
 (defn triples-that-sum [n s]
   (filter #(= s (apply + %)) (ordered-triples n)))
 
+; Exercise 2.42
+; =============
+(def empty-board [])
+
+(defn enumerate-interval [a b]
+  (range a (inc b)))
+
+(defn adjoin-pos [row col board]
+  (cons [col row] board))
+
+;    1  2  3
+;  ---------
+;1 | x    y
+;2 |   x
+;3 |
+
+(defn safe? [k board]
+  (letfn [(same-row? [[_ row1] [_ row2]]
+            (= row1 row2))
+          (same-diagonal? [[col1 row1] [col2 row2]]
+            (= (Math/abs (- col1 col2))
+               (Math/abs (- row1 row2))))]
+    (and
+      (not-any? (partial same-row? (first board)) (rest board))
+      (not-any? (partial same-diagonal? (first board)) (rest board)))))
+          
+(defn queens [board-size]
+  (letfn [(queen-cols [k]
+    (if (zero? k)
+      [empty-board]
+      (filter 
+        #(safe? k %)
+        (flatmap 
+          #(map (fn [new-row] (adjoin-pos new-row k %))
+                (enumerate-interval 1 board-size))
+          (queen-cols (dec k))))))]
+  (queen-cols board-size)))
+
+;    1 2 3 4 5 6 7 8
+;  -------------------
+;1 |*  
+;2 |             * 
+;3 |         * 
+;4 |               *
+;5 |  * 
+;6 |       *
+;7 |           *  
+;8 |    *
+
+; Exercise 2.43
+;==============
+(defn queens-slow [board-size]
+  (letfn [(queen-cols [k]
+    (if (zero? k)
+      [empty-board]
+      (filter 
+        #(safe? k %)
+        (flatmap 
+          #(map (fn [new-row] (adjoin-pos new-row k %))
+                ;(enumerate-interval 1 board-size))
+                (queen-cols (dec k)))
+          (enumerate-interval 1 board-size)))))]
+  (queen-cols board-size)))
+
+; ?????
+
+
+; Exercise 2.44
+;==============
+;(defn up-split [painter n]
+;  (if (zero? n)
+;    painter
+;    (let [smaller (up-split (dec n))]
+;      (below painter (beside smaller smaller)))))
+;
+;
+;; Exercise 2.45
+;;==============
+;(defn split [combine with]
+;  (letfn [(split-aux [painter n]
+;            (if (zero? 0)
+;              painter
+;              (let [smaller (split-aux (dec n))]
+;                (conbine painter (with smaller smalle)))))]
+;    (fn [painter n] (split-aux painter n))))
+;
+;(def right-split-de (split beside below))
+;(def up-split-ds (split below beside))
+;
+
+; Exercise 2.46
+;==============
+(defn make-vect [x y]
+  [x y])
+(defn xcor-vect [vect]
+  (first vect))
+(defn ycor-vect [vect]
+  (last vect))
+
+(defn add-vect [v w]
+  [(+ (xcor-vect v) (xcor-vect w))
+   (+ (ycor-vect v) (ycor-vect w))])
+(defn sub-vect [v w]
+  [(- (xcor-vect v) (xcor-vect w))
+   (- (ycor-vect v) (ycor-vect w))])
+(defn scale-vect [factor v]
+  [(* factor (xcor-vect v))
+   (* factor (ycor-vect v))])
+
+; Exercise 2.47
+; =============
+(defn make-frame [origin edge1 edge2]
+  [origin edge1 edge2])
+
+(defn origin-frame [frame]
+  (first frame))
+(defn edge1-frame [frame]
+  (second frame))
+(defn edge2-frame [frame]
+  (last frame))
+
+(defn make-frame2 [origin edge1 edge2]
+  (cons origin [[edge1 edge2]]))
+(defn origin-frame2 [frame]
+  (first frame))
+(defn edge1-frame2 [frame]
+  (first (last frame)))
+(defn edge2-frame2 [frame]
+  (second (last frame)))
+
+; Exercise 2.48
+; =============
+(defn make-segment [o-vect e-vect]
+ [o-vect e-vect]) 
+(defn start-segment [segment]
+  (first segment))
+(defn end-segment [segment]
+  (last segment))
+
+; Exercise 2.49
+;==============
+(defn frame-coord-map [frame]
+  (fn [v]
+    (add-vect 
+         (origin-frame frame)
+         (add-vect (scale-vect (xcor-vect v)
+                               (edge1-frame frame))
+                   (scale-vect (ycor-vect v)
+                               (edge2-frame frame))))))
+
+(defn draw-line [origin segment]
+  (println "Line from" origin "with vector " segment))
+
+(defn segments->painter [segment-list]
+  (fn [frame]
+    (for-each
+      (fn [segment]
+        (draw-line 
+              ((frame-coord-map frame) (start-segment segment))
+              ((frame-coord-map frame) (end-segment segment))))
+      segment-list)))
+
+(def left-side    (make-segment (make-vect 0 0) (make-vect 0 1)))
+(def top-side     (make-segment (make-vect 0 1) (make-vect 1 1)))
+(def right-side   (make-segment (make-vect 1 1) (make-vect 1 0)))
+(def bottom-side  (make-segment (make-vect 1 0) (make-vect 0 0)))
+(def outline-painter (segments->painter [left-side top-side right-side bottom-side])) 
+
+(def top-left (make-segment (make-vect 0 1) (make-vect 1 0)))
+(def bottom-left (make-segment (make-vect 0 0) (make-vect 1 1)))
+(def cross-painter (segments->painter [top-left bottom-left]))
+
+(def mid-left-top (make-segment (make-vect 0 0.5) (make-vect 0.5 1)))
+(def mid-top-right (make-segment (make-vect 0.5 1) (make-vect 1 0.5)))
+(def mid-right-bottom (make-segment (make-vect 1 0.5) (make-vect 0.5 0)))
+(def mid-bottom-left (make-segment (make-vect 0.5 0) (make-vect 0 0.5))) 
+(def diamon-painter (segment->painter [mid-left-top mid-top-right, mid-right-bottom, mid-buttom-left]))
+
+; Exercise 2.50
+; =============
+(defn transform-painter [painter origin corner1 corner2]
+  (fn [frame]
+    (let [m (frame-coord-map frame)]
+      (let [new-origin (m origin)]
+        (painter
+          (make-frame new-origin 
+                (sub-vect (m corner1) new-origin)
+                (sub-vect (m corner2) new-origin)))))))
+
+(defn flip-vert [painter]
+ (transform-painter painter
+           (make-vect 0.0 1.0)
+           (make-vect 1.0 1.0)
+           (make-vect 0.0 0.0)))
+
+(defn flip-horiz [painter]
+  (transform-painter painter
+           (make-vect 1.0 0)
+           (make-vect 0.0 0.0)
+           (make-vect 1.0 1.0)))
+(defn rotate180 [painter]
+  (transform-painter painter
+           (make-vect 1.0 1.0)
+           (make-vect 0.0 1.0)
+           (make-vect 1.0 0.0)))  
+(defn rotate270 [painter]
+  (transform-painter painter
+           (make-vect 0.0 1.0)
+           (make-vect 0.0 0.0)
+           (make-vect 1.0 1.0)))
+
+(defn rotate90 [painter]
+  (transform-painter painter
+           (make-vect 1.0 0.0)
+           (make-vect 1.0 1.0)
+           (make-vect 0.000.0)))
+
+; Exercise 2.51
+;==============
+(defn beside [painter1 painter2]
+  (let [split-point (make-vect 0.5 0.0)]
+    (let [paint-left (tranform-painter painter1
+                                       (make-vect 0.0 0.0)
+                                       split-point
+                                       (make-vect 0.0 1.0))
+          paint-right (transform-painter painter2
+                                         split-point
+                                         (make-vect 1.0 0.0)
+                                         (make-vect 0.5 1.0))]
+     (fn [frame]
+      (paint-left frame)
+      (paint-right frame))))) 
+
+(defn below [painter1 painter2]
+  (let [split-point (make-vect 0.0 0.5)]
+    (let [paint-top (transform-painter painter1
+                                       split-point
+                                       (make-vect 1.0 0.5)
+                                       (make-vect 0.0 1.0))
+          paint-bottom (transform-painter painter2
+                                          (make-vect 0.0 0.0)
+                                          (make-vect 1.0 0.0)
+                                          split-point)]
+      (fn [frame]
+        (paint-top frame)
+        (paint-bottom frame)))))
+
+; But the images is rotated.....
+(defn below2 [painter1 painter2]
+  (let [side-by-side (beside painter1 painter2)]
+    (rotate90 side-by-side)))
+
+; Exercise 2.52
+; =============
+; TODO
